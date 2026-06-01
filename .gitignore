@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+secret.key
+*.key
 
 # debug
 npm-debug.log*
@@ -36,6 +38,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# IDE
+.cursor/
 
 # typescript
 *.tsbuildinfo
