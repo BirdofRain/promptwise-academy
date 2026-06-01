@@ -52,3 +52,27 @@ h4 {
 .prose-lesson p:last-child {
   margin-bottom: 0;
 }
+
+/* Accessible, calm reading experience in the academy */
+.app-readable {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.app-readable h1 {
+  line-height: 1.25;
+}
+
+@media (min-width: 768px) {
+  .app-readable {
+    font-size: 1.1875rem;
+  }
+}
+
+/* Larger tap targets for forms and filters */
+.app-readable button,
+.app-readable input,
+.app-readable select,
+.app-readable textarea {
+  min-height: 2.75rem;
+}

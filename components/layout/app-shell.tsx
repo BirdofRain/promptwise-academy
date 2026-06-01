@@ -44,7 +44,7 @@ export function AppShell({
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors",
                     active
                       ? "bg-white text-navy shadow-sm"
                       : "text-navy/70 hover:bg-white/60 hover:text-navy",

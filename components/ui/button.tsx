@@ -16,9 +16,9 @@ const variantStyles: Record<Variant, string> = {
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "px-4 py-2 text-sm",
-  md: "px-5 py-2.5 text-base",
-  lg: "px-6 py-3 text-lg",
+  sm: "px-4 py-2.5 text-base min-h-[2.75rem]",
+  md: "px-5 py-3 text-lg min-h-[3rem]",
+  lg: "px-6 py-3.5 text-lg min-h-[3.25rem]",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

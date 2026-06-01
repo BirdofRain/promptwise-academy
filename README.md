@@ -26,6 +26,15 @@ Open [http://localhost:3000](http://localhost:3000).
    - **Active** — full app access
    - **None** — signed in but paywall overlay (test pricing flow)
 
+### Academy features
+
+- **Course dashboard** (`/app`) — module progress bars, continue learning, estimated time
+- **Module pages** (`/app/modules/[slug]`) — lesson list with completion status
+- **Lessons** — video placeholder, key ideas, example prompts, ChatGPT callout, mark complete
+- **Prompt library** — 30+ prompts by category with Beginner / Guided / Advanced
+- **Prompt Lab** — seven-part formula with live preview
+- **Master Prompt Builder** — template fallback; set `OPENAI_API_KEY` for AI-enhanced prompts via `/api/prompts/master`
+
 ## Project structure
 
 - `app/(marketing)/` — public pages

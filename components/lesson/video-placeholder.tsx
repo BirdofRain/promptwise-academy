@@ -16,8 +16,8 @@ export function VideoPlaceholder({
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
           <PlayCircle className="h-9 w-9 text-sage-dark" strokeWidth={1.5} />
         </div>
-        <p className="font-serif text-xl text-navy">Video lesson coming soon</p>
-        <p className="mt-2 max-w-md text-sm text-muted">
+        <p className="font-serif text-2xl text-navy">Video lesson coming soon</p>
+        <p className="mt-3 max-w-md text-base text-muted">
           We&apos;re recording &ldquo;{title}&rdquo; with calm, step-by-step guidance.
           {durationMinutes ? ` (~${durationMinutes} min)` : ""} Read the lesson notes below
           while you wait.

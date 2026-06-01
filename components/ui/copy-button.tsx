@@ -36,7 +36,7 @@ export function CopyButton({ text, label = "Copy prompt", className }: CopyButto
       type="button"
       onClick={handleCopy}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg border border-navy/15 bg-cream px-4 py-2 text-sm font-medium text-navy transition-colors hover:border-navy/30 hover:bg-cream-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
+        "inline-flex min-h-[3rem] items-center gap-2 rounded-lg border border-navy/15 bg-cream px-5 py-3 text-base font-medium text-navy transition-colors hover:border-navy/30 hover:bg-cream-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2",
         className,
       )}
       aria-live="polite"

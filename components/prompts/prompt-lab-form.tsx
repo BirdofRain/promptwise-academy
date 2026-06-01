@@ -3,129 +3,127 @@
 import { useMemo, useState } from "react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Card } from "@/components/ui/card";
-import { labTemplates, type LabCategory } from "@/lib/prompt-lab";
+import {
+  buildPromptFromFormula,
+  formulaExamples,
+  formulaFields,
+  type FormulaValues,
+} from "@/lib/prompt-lab";
+import { Lightbulb } from "lucide-react";
 
-const categories: { id: LabCategory | "all"; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "relationships", label: "Relationships" },
-  { id: "planning", label: "Planning" },
-  { id: "analysis", label: "Analysis" },
-  { id: "family", label: "Family" },
-  { id: "work", label: "Work" },
-  { id: "general", label: "General" },
-];
+const emptyValues: FormulaValues = {
+  role: "",
+  context: "",
+  goal: "",
+  constraints: "",
+  tone: "",
+  outputFormat: "",
+  followUp: "",
+};
 
 export function PromptLabForm() {
-  const [category, setCategory] = useState<LabCategory | "all">("all");
-  const [templateIndex, setTemplateIndex] = useState(0);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<FormulaValues>(emptyValues);
 
-  const filtered = useMemo(
-    () =>
-      category === "all"
-        ? labTemplates
-        : labTemplates.filter((t) => t.category === category),
-    [category],
-  );
+  const prompt = useMemo(() => buildPromptFromFormula(values), [values]);
 
-  const template = filtered[templateIndex] ?? filtered[0];
+  function loadExample(example: (typeof formulaExamples)[0]) {
+    setValues(example.values as FormulaValues);
+  }
 
-  const prompt = template ? template.build(values) : "";
-
-  function handleCategoryChange(next: LabCategory | "all") {
-    setCategory(next);
-    setTemplateIndex(0);
-    setValues({});
+  function clearForm() {
+    setValues(emptyValues);
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="grid gap-10 xl:grid-cols-2">
       <div className="space-y-6">
+        <Card padding="lg" className="border-sage/20 bg-sage/5">
+          <div className="flex gap-3">
+            <Lightbulb className="h-6 w-6 shrink-0 text-sage-dark" aria-hidden />
+            <div>
+              <h3 className="font-serif text-xl text-navy">How this works</h3>
+              <p className="mt-2 text-lg text-muted">
+                Fill in each box in plain English. You do not need perfect words — ChatGPT
+                understands normal speech. When you are done, copy the prompt on the right
+                into ChatGPT.
+              </p>
+            </div>
+          </div>
+        </Card>
+
         <div>
-          <p className="mb-2 text-sm font-medium text-navy">Category</p>
+          <p className="mb-3 text-base font-medium text-navy">Try an example</p>
           <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
+            {formulaExamples.map((ex) => (
               <button
-                key={cat.id}
+                key={ex.title}
                 type="button"
-                onClick={() => handleCategoryChange(cat.id)}
-                className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                  category === cat.id
-                    ? "bg-navy text-cream"
-                    : "bg-cream-dark text-navy hover:bg-white"
-                }`}
+                onClick={() => loadExample(ex)}
+                className="rounded-lg border border-navy/15 bg-white px-4 py-2.5 text-base text-navy transition-colors hover:border-sage hover:bg-cream-dark"
               >
-                {cat.label}
+                {ex.title}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={clearForm}
+              className="rounded-lg px-4 py-2.5 text-base text-muted underline"
+            >
+              Clear all fields
+            </button>
           </div>
         </div>
 
-        <div>
-          <label htmlFor="template" className="mb-1 block text-sm font-medium text-navy">
-            Template
-          </label>
-          <select
-            id="template"
-            value={templateIndex}
-            onChange={(e) => {
-              setTemplateIndex(Number(e.target.value));
-              setValues({});
-            }}
-            className="w-full rounded-lg border border-navy/15 bg-white px-3 py-2 text-navy"
-          >
-            {filtered.map((t, i) => (
-              <option key={t.label} value={i}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {template?.fields.map((field) => (
+        {formulaFields.map((field) => (
           <div key={field.id}>
-            <label htmlFor={field.id} className="mb-1 block text-sm font-medium text-navy">
+            <label htmlFor={field.id} className="mb-1 block text-lg font-medium text-navy">
               {field.label}
             </label>
+            <p className="mb-2 text-base text-muted">{field.explanation}</p>
             {field.multiline ? (
               <textarea
                 id={field.id}
-                rows={3}
+                rows={4}
                 placeholder={field.placeholder}
-                value={values[field.id] ?? ""}
+                value={values[field.id]}
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [field.id]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-navy/15 bg-white px-4 py-2.5 text-navy focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+                className="w-full rounded-lg border border-navy/15 bg-white px-4 py-3 text-lg text-navy focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
               />
             ) : (
               <input
                 id={field.id}
                 type="text"
                 placeholder={field.placeholder}
-                value={values[field.id] ?? ""}
+                value={values[field.id]}
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [field.id]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-navy/15 bg-white px-4 py-2.5 text-navy focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+                className="w-full rounded-lg border border-navy/15 bg-white px-4 py-3 text-lg text-navy focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
               />
             )}
+            <p className="mt-1.5 text-sm text-muted">
+              Example: <span className="italic">{field.example}</span>
+            </p>
           </div>
         ))}
       </div>
 
-      <Card className="flex flex-col">
-        <h3 className="font-serif text-lg text-navy">Your prompt</h3>
-        <p className="mt-1 text-sm text-muted">
-          Copy and paste into ChatGPT. Refine by saying &ldquo;warmer&rdquo; or &ldquo;shorter.&rdquo;
-        </p>
-        <pre className="mt-4 flex-1 overflow-auto whitespace-pre-wrap rounded-lg bg-cream-dark p-4 text-sm leading-relaxed text-navy">
-          {prompt}
-        </pre>
-        <div className="mt-4">
-          <CopyButton text={prompt} />
-        </div>
-      </Card>
+      <div className="xl:sticky xl:top-8 xl:self-start">
+        <Card padding="lg" className="flex flex-col">
+          <h3 className="font-serif text-2xl text-navy">Your completed prompt</h3>
+          <p className="mt-2 text-lg text-muted">
+            Updates as you type. Copy when ready.
+          </p>
+          <pre className="mt-5 max-h-[min(70vh,32rem)] flex-1 overflow-auto whitespace-pre-wrap rounded-lg bg-cream-dark p-5 text-base leading-relaxed text-navy">
+            {prompt}
+          </pre>
+          <div className="mt-6">
+            <CopyButton text={prompt} label="Copy prompt for ChatGPT" />
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

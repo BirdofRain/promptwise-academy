@@ -1,129 +1,136 @@
-export type LabCategory =
-  | "relationships"
-  | "planning"
-  | "analysis"
-  | "family"
-  | "work"
-  | "general";
-
-export interface LabField {
-  id: string;
+export interface FormulaField {
+  id: keyof FormulaValues;
   label: string;
+  explanation: string;
   placeholder: string;
+  example: string;
   multiline?: boolean;
 }
 
-export interface LabTemplate {
-  category: LabCategory;
-  label: string;
-  fields: LabField[];
-  build: (values: Record<string, string>) => string;
+export interface FormulaValues {
+  role: string;
+  context: string;
+  goal: string;
+  constraints: string;
+  tone: string;
+  outputFormat: string;
+  followUp: string;
 }
 
-export const labTemplates: LabTemplate[] = [
+export const formulaFields: FormulaField[] = [
   {
-    category: "relationships",
-    label: "Thoughtful message",
-    fields: [
-      { id: "person", label: "Who is this for?", placeholder: "My daughter, a close friend..." },
-      { id: "situation", label: "What is going on?", placeholder: "They are going through...", multiline: true },
-      { id: "goal", label: "What do you want the message to do?", placeholder: "Encourage, apologize, check in..." },
-    ],
-    build: (v) => `Role: Thoughtful friend helping me write a message.
-
-Context: This is for ${v.person || "[person]"}. Situation: ${v.situation || "[situation]"}
-
-Goal: ${v.goal || "Write a warm, sincere message"}
-
-Tone: Sincere, not dramatic. No clichés.
-Output: 2 short versions (warm and brief). Under 100 words each.
-Ask me 2 clarifying questions before you draft.`,
+    id: "role",
+    label: "Role",
+    explanation:
+      "Tell ChatGPT who to be — a calm coach, thoughtful editor, listening friend, or practical planner.",
+    placeholder: "e.g., A patient life coach for adults learning ChatGPT",
+    example: "A warm communication coach who helps with family conversations",
   },
   {
-    category: "planning",
-    label: "Weekly rhythm",
-    fields: [
-      { id: "priorities", label: "Top priorities this week", placeholder: "Family dinner, exercise, client work...", multiline: true },
-      { id: "time", label: "Flexible hours available", placeholder: "About 10 hours outside of work" },
-    ],
-    build: (v) => `Role: Gentle life planner.
-
-Context: My priorities: ${v.priorities || "[priorities]"}. Flexible time: ${v.time || "[hours]"}.
-
-Goal: Suggest a sustainable weekly rhythm with margin — not a rigid schedule.
-
-Tone: Encouraging, realistic.
-Output: Simple table by day with morning/afternoon/evening themes.`,
+    id: "context",
+    label: "Context",
+    explanation:
+      "What is going on? Include relevant facts, relationships, and timing. More context usually means better answers.",
+    placeholder: "Describe your situation in a few sentences…",
+    example:
+      "My adult daughter and I have been distant since the holidays. I want to reach out without pressure.",
+    multiline: true,
   },
   {
-    category: "analysis",
-    label: "Decision clarity",
-    fields: [
-      { id: "decision", label: "What are you deciding?", placeholder: "Move, job change, major purchase..." },
-      { id: "options", label: "Options you are considering", placeholder: "Option A vs Option B", multiline: true },
-      { id: "values", label: "What matters most to you?", placeholder: "Family stability, health, faith, finances..." },
-    ],
-    build: (v) => `Role: Decision-making coach.
-
-Context: I am deciding: ${v.decision || "[decision]"}. Options: ${v.options || "[options]"}. Values: ${v.values || "[values]"}.
-
-Goal: Pros/cons table, blind spots, and 3 questions to discuss with a trusted person. Do not decide for me.
-
-Tone: Respectful, clear.
-Output: Table + short summary.`,
+    id: "goal",
+    label: "Goal",
+    explanation:
+      "What do you want as a result? A draft message, a plan, questions to reflect on, or a clear decision framework.",
+    placeholder: "e.g., Help me write a short, kind text to reopen conversation",
+    example: "Give me 2 text options under 80 words and 3 questions I could ask her",
   },
   {
-    category: "family",
-    label: "Family meeting",
-    fields: [
-      { id: "topic", label: "Topic", placeholder: "Holiday plans, caregiving, schedules..." },
-      { id: "attendees", label: "Who is involved?", placeholder: "Siblings, adult children..." },
-    ],
-    build: (v) => `Role: Calm family meeting facilitator.
-
-Context: Topic: ${v.topic || "[topic]"}. People: ${v.attendees || "[attendees]"}.
-
-Goal: Agenda, ground rules, opening script, and action items.
-
-Tone: Inclusive, kind.`,
+    id: "constraints",
+    label: "Constraints",
+    explanation:
+      "Limits help — word count, topics to avoid, or things ChatGPT should not assume about your life.",
+    placeholder: "e.g., Under 150 words, no blaming language, do not invent details",
+    example: "No medical advice; keep it under 200 words; I will edit before sending",
+    multiline: true,
   },
   {
-    category: "work",
-    label: "Professional email",
-    fields: [
-      { id: "recipient", label: "Recipient", placeholder: "Client, colleague, vendor..." },
-      { id: "purpose", label: "Purpose", placeholder: "Follow up, request info, say no kindly...", multiline: true },
-    ],
-    build: (v) => `Role: Professional writing assistant.
-
-Context: Email to ${v.recipient || "[recipient]"}. Purpose: ${v.purpose || "[purpose]"}.
-
-Goal: Draft under 150 words with clear subject line and one call to action.
-
-Tone: Warm and professional.`,
+    id: "tone",
+    label: "Tone",
+    explanation: "How should the response feel? Warm, direct, hopeful, professional, pastoral, etc.",
+    placeholder: "e.g., Warm, respectful, plain language — never condescending",
+    example: "Gentle and hopeful, like a wise friend",
   },
   {
-    category: "general",
-    label: "Custom (full formula)",
-    fields: [
-      { id: "role", label: "Role", placeholder: "Calm coach, wise editor..." },
-      { id: "context", label: "Context", placeholder: "What is going on?", multiline: true },
-      { id: "goal", label: "Goal", placeholder: "What do you want?" },
-      { id: "tone", label: "Tone", placeholder: "Warm, direct, hopeful..." },
-      { id: "format", label: "Output format", placeholder: "Bullets, short letter, steps..." },
-    ],
-    build: (v) => `Role: ${v.role || "A helpful, patient assistant"}
+    id: "outputFormat",
+    label: "Output format",
+    explanation:
+      "How should ChatGPT structure the answer? Bullets, numbered steps, a letter draft, or a table.",
+    placeholder: "e.g., Bullet points, short letter, step-by-step",
+    example: "Numbered steps, then one sample draft at the end",
+  },
+  {
+    id: "followUp",
+    label: "Follow-up questions",
+    explanation:
+      "Ask ChatGPT to interview you first. This single habit dramatically improves complex prompts.",
+    placeholder: "e.g., Ask me 3 clarifying questions before your main answer",
+    example: "Ask up to 3 clarifying questions one at a time before you advise me",
+  },
+];
 
-Context: ${v.context || "[your context]"}
+export function buildPromptFromFormula(values: Partial<FormulaValues>): string {
+  const v = {
+    role: values.role?.trim() || "A calm, practical assistant who helps adults with real-life tasks",
+    context: values.context?.trim() || "[Describe your situation here]",
+    goal: values.goal?.trim() || "[What you want help with]",
+    constraints:
+      values.constraints?.trim() ||
+      "Do not invent facts about my life. Avoid jargon and hype.",
+    tone: values.tone?.trim() || "Warm, respectful, and plain-spoken",
+    outputFormat: values.outputFormat?.trim() || "Clear sections with bullet points",
+    followUp:
+      values.followUp?.trim() ||
+      "Ask me up to 3 clarifying questions before your main answer.",
+  };
 
-Goal: ${v.goal || "[your goal]"}
+  return `Role: ${v.role}
 
-Constraints: Keep it practical; no jargon.
+Context: ${v.context}
 
-Tone: ${v.tone || "Warm and clear"}
+Goal: ${v.goal}
 
-Output format: ${v.format || "Bullet points"}
+Constraints: ${v.constraints}
 
-Follow-up: Ask me 3 clarifying questions before your main answer.`,
+Tone: ${v.tone}
+
+Output format: ${v.outputFormat}
+
+Follow-up: ${v.followUp}`;
+}
+
+export const formulaExamples = [
+  {
+    title: "Hard conversation with family",
+    values: {
+      role: "Communication coach for respectful family talks",
+      context: "I need to talk with my brother about our mother's care. We disagree on next steps.",
+      goal: "Prepare an opening line, 3 talking points, and a calm closing",
+      constraints: "No blaming; under 250 words for the outline",
+      tone: "Firm and kind",
+      outputFormat: "Bullet outline I can practice",
+      followUp: "Ask me 3 clarifying questions first",
+    },
+  },
+  {
+    title: "Weekly planning",
+    values: {
+      role: "Gentle planner who values rest",
+      context: "I work part-time and help with grandchildren on Tuesdays and Thursdays.",
+      goal: "A simple weekly rhythm with margin, not a rigid schedule",
+      constraints: "Max 30 minutes of planning tasks per day",
+      tone: "Encouraging, realistic",
+      outputFormat: "Table by day (morning / afternoon / evening)",
+      followUp: "Ask me 2 questions about my energy levels first",
+    },
   },
 ];

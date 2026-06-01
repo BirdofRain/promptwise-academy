@@ -1,6 +1,6 @@
-import { PromptCardItem } from "@/components/prompts/prompt-card";
+import { PromptLibraryBrowser } from "@/components/prompts/prompt-library-browser";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { promptLibrary, promptCategories } from "@/content/prompt-library";
+import { promptCategories } from "@/content/prompt-library";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,26 +9,29 @@ export const metadata: Metadata = {
 
 export default function PromptsPage() {
   return (
-    <div>
+    <div className="app-readable">
       <SectionHeading
         title="Prompt library"
-        description="Copy-ready examples for real life. Paste into ChatGPT, answer any follow-up questions, then edit in your voice."
+        description="Copy-ready examples for real life. Pick a category, choose your comfort level, and paste into ChatGPT."
       />
 
-      {promptCategories.map((cat) => {
-        const cards = promptLibrary.filter((p) => p.category === cat.id);
-        if (cards.length === 0) return null;
-        return (
-          <section key={cat.id} className="mt-12">
-            <h2 className="font-serif text-2xl text-navy">{cat.label}</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {cards.map((card) => (
-                <PromptCardItem key={card.id} card={card} />
-              ))}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {promptCategories
+          .filter((c) => !c.comingSoon)
+          .map((cat) => (
+            <div
+              key={cat.id}
+              className="rounded-xl border border-navy/10 bg-white p-5"
+            >
+              <p className="text-lg font-medium text-navy">{cat.label}</p>
+              <p className="mt-1 text-base text-muted">{cat.description}</p>
             </div>
-          </section>
-        );
-      })}
+          ))}
+      </div>
+
+      <div className="mt-12">
+        <PromptLibraryBrowser />
+      </div>
     </div>
   );
 }

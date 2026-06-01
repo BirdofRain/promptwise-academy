@@ -127,7 +127,7 @@ After ChatGPT responds, you can say: “Make this warmer,” “Shorter,” or �
     body: `If technology frustrates you, you are normal. Pick one prompt from the library about something you already care about — a birthday message, a weekly plan, a kind email.
 
 Success is not speed. Success is one useful result that makes tomorrow easier.`,
-    relatedPromptIds: ["basics-low-stakes"],
+    relatedPromptIds: ["basics-clarifying-questions"],
   },
   // Relationships
   {
