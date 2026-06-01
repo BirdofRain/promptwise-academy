@@ -157,48 +157,85 @@ See [docs/CONTENT.md](docs/CONTENT.md).
 | `npm run db:migrate` | Create migration |
 | `npm run db:studio` | Prisma Studio |
 
-## GitHub push
+## Verify before deploy
 
 ```bash
-git init   # if needed
-git add .
-git commit -m "Your message"
-git branch -M main
-git remote add origin https://github.com/YOU/promptwise-academy.git
-git push -u origin main
+npm run test    # lint + typecheck
+npm run build   # prisma generate + next build
 ```
 
-Install [GitHub CLI](https://cli.github.com/) optional:
+Secrets: copy [.env.example](.env.example) to `.env.local` locally. **Never commit** `.env` or `.env.local` (ignored via `.gitignore`).
 
-```bash
+Full deploy walkthrough: [docs/DEPLOY.md](docs/DEPLOY.md).
+
+## GitHub push
+
+This repo uses branch **`master`**. After creating a GitHub repository:
+
+```powershell
+cd c:\Users\samue\prompt-engineering
+git remote add origin https://github.com/YOUR_USER/promptwise-academy.git
+git push -u origin master
+```
+
+**GitHub CLI** (Windows):
+
+```powershell
 winget install GitHub.cli
 gh auth login
-gh repo create promptwise-academy --private --source=. --push
+cd c:\Users\samue\prompt-engineering
+gh repo create promptwise-academy --private --source=. --remote=origin --push
 ```
 
 ## Vercel deploy
 
-1. Import the GitHub repo at [vercel.com](https://vercel.com).
-2. **Environment variables** — add all from `.env.example` for Production.
-3. Set `AUTH_MODE=authjs`, `APP_URL=https://your-domain.vercel.app`.
-4. Run migrations against production DB:
+### Dashboard (recommended)
+
+1. Go to [vercel.com/new](https://vercel.com/new) and import your GitHub repo.
+2. Leave **Framework Preset** as Next.js; **Build Command** `npm run build`.
+3. Add **Environment Variables** for **Production** (see launch checklist below).
+4. Deploy, then run once from your machine:
 
    ```bash
-   DATABASE_URL="your-production-url" npx prisma db push
+   set DATABASE_URL=your-production-neon-url
+   npx prisma db push
    ```
 
-5. Deploy. Add Stripe webhook URL for production domain.
-6. Redeploy after env changes if needed.
+5. In Stripe, set webhook URL to `https://YOUR_DOMAIN/api/stripe/webhook`.
+6. Redeploy after adding or changing env vars.
 
-CLI optional:
+### CLI
 
-```bash
+```powershell
 winget install Vercel.Vercel
 vercel login
+cd c:\Users\samue\prompt-engineering
 vercel link
 vercel env add DATABASE_URL
+vercel env add AUTH_SECRET
+vercel env add AUTH_MODE
+vercel env add APP_URL
+vercel
 vercel --prod
 ```
+
+Use `vercel env add` or the dashboard — do not commit secrets to git.
+
+## Production environment (Vercel)
+
+| Variable | Production value |
+|----------|------------------|
+| `APP_URL` | `https://your-domain.vercel.app` |
+| `AUTH_MODE` | `authjs` |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `DATABASE_URL` | Postgres (Neon recommended) |
+| `STRIPE_SECRET_KEY` | `sk_live_...` or `sk_test_...` for beta |
+| `STRIPE_WEBHOOK_SECRET` | From Stripe webhook settings |
+| `STRIPE_PRICE_ID_MONTHLY` | Stripe Price ID |
+| `STRIPE_PRICE_ID_YEARLY` | Stripe Price ID |
+| `OPENAI_API_KEY` | Optional |
+
+Preview deployments can use the same vars or a separate Neon branch database.
 
 ## Project structure
 
@@ -215,6 +252,17 @@ lib/               Auth, db, stripe, entitlements, progress
 prisma/            Database schema
 docs/              AUTH.md, CONTENT.md
 ```
+
+## Launch checklist (paid beta)
+
+- [ ] **Database** — Neon/Supabase Postgres; `npx prisma db push` on production `DATABASE_URL`
+- [ ] **Auth** — `AUTH_MODE=authjs`, `AUTH_SECRET` set; test `/signup` and `/login`
+- [ ] **APP_URL** — matches live Vercel URL (required for Auth.js callbacks)
+- [ ] **Stripe** — products/prices created; env vars set; webhook → `/api/stripe/webhook`
+- [ ] **OpenAI** — `OPENAI_API_KEY` on Vercel (optional; template fallback works without it)
+- [ ] **Content** — edit lessons/prompts in `content/` per [docs/CONTENT.md](docs/CONTENT.md)
+- [ ] **Videos** — replace lesson placeholders with embed URLs when recordings are ready
+- [ ] **Smoke test** — free preview → checkout → paid access → Prompt Lab → Master Builder
 
 ## License
 
