@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser, getSession, hasPaidAccess } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
+import { getCurrentUserAccess } from "@/lib/user-access";
 
 export {
   canAccessFullLesson,
@@ -18,13 +19,14 @@ export async function requireAuth(redirectTo = "/login") {
 }
 
 export async function requirePaidAccess(redirectTo = "/pricing") {
-  const session = await requireAuth();
-  if (!hasPaidAccess(session.user)) {
+  await requireAuth();
+  const access = await getCurrentUserAccess();
+  if (!access.paid) {
     redirect(`${redirectTo}?reason=subscription`);
   }
-  return session;
+  return access;
 }
 
-export async function getOptionalUser() {
-  return getCurrentUser();
+export async function getOptionalUserAccess() {
+  return getCurrentUserAccess();
 }

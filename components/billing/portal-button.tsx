@@ -35,7 +35,7 @@ export function PortalButton() {
             Loading…
           </>
         ) : (
-          "Manage subscription"
+          "Manage billing"
         )}
       </Button>
       {error && (

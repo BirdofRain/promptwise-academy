@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured, getAppUrl } from "@/lib/stripe";
+import { ensureStripeCustomerForUser, isStaleStripeCustomerError } from "@/lib/stripe-sync";
 
 export async function POST() {
   if (!isStripeConfigured() || !isDatabaseConfigured()) {
@@ -17,11 +18,8 @@ export async function POST() {
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user?.stripeCustomerId) {
-    return NextResponse.json(
-      { error: "No billing account yet. Subscribe from the pricing page first." },
-      { status: 400 },
-    );
+  if (!user) {
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
   const stripe = getStripe();
@@ -29,10 +27,40 @@ export async function POST() {
     return NextResponse.json({ error: "Stripe unavailable." }, { status: 503 });
   }
 
-  const portal = await stripe.billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
-    return_url: `${getAppUrl()}/app/account`,
-  });
+  let customerId: string;
+  try {
+    customerId = await ensureStripeCustomerForUser(user, stripe);
+  } catch (err) {
+    console.error("[stripe portal] customer setup failed", {
+      userId: user.id,
+      code: (err as { code?: string }).code,
+    });
+    return NextResponse.json(
+      { error: "No billing account yet. Subscribe from the pricing page first." },
+      { status: 400 },
+    );
+  }
 
-  return NextResponse.json({ url: portal.url });
+  try {
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${getAppUrl()}/app/account`,
+    });
+
+    return NextResponse.json({ url: portal.url });
+  } catch (err) {
+    if (isStaleStripeCustomerError(err)) {
+      const freshId = await ensureStripeCustomerForUser({ ...user, stripeCustomerId: null }, stripe);
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: freshId,
+        return_url: `${getAppUrl()}/app/account`,
+      });
+      return NextResponse.json({ url: portal.url });
+    }
+    console.error("[stripe portal] session create failed", {
+      userId: user.id,
+      code: (err as { code?: string }).code,
+    });
+    return NextResponse.json({ error: "Could not open billing portal." }, { status: 500 });
+  }
 }

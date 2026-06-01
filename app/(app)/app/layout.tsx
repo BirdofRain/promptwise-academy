@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { PaywallNotice } from "@/components/app/paywall-notice";
 import { requireAuth } from "@/lib/access";
-import { getCurrentUser, hasPaidAccess } from "@/lib/auth/session";
+import { getCurrentUserAccess } from "@/lib/user-access";
 
 export default async function AppLayout({
   children,
@@ -9,12 +9,11 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   await requireAuth();
-  const user = await getCurrentUser();
-  const paid = hasPaidAccess(user ?? null);
+  const access = await getCurrentUserAccess();
 
   return (
     <AppShell>
-      {!paid && <PaywallNotice />}
+      {!access.paid && <PaywallNotice />}
       {children}
     </AppShell>
   );

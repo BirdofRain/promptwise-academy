@@ -4,14 +4,14 @@ import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured, priceIdForPlan, getAppUrl } from "@/lib/stripe";
 import type { BillingPlan } from "@/lib/stripe";
 import { isAuthJsEnabled } from "@/auth";
+import { ensureStripeCustomerForUser, isStaleStripeCustomerError } from "@/lib/stripe-sync";
 
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
     return NextResponse.json(
       {
-        error: "Stripe is not configured yet.",
+        error: "Checkout is not configured yet.",
         code: "STRIPE_NOT_CONFIGURED",
-        hint: "Add STRIPE_SECRET_KEY and price IDs to .env — see README.",
       },
       { status: 503 },
     );
@@ -29,7 +29,10 @@ export async function POST(request: Request) {
 
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Please sign in first.", code: "NOT_SIGNED_IN" },
+      { status: 401 },
+    );
   }
 
   let body: { plan?: BillingPlan };
@@ -42,50 +45,108 @@ export async function POST(request: Request) {
   const plan: BillingPlan = body.plan === "yearly" ? "yearly" : "monthly";
   const priceId = priceIdForPlan(plan);
   if (!priceId) {
-    return NextResponse.json({ error: "Price not configured for this plan." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Checkout is not configured yet.", code: "PRICE_NOT_CONFIGURED" },
+      { status: 503 },
+    );
   }
 
   const stripe = getStripe();
   if (!stripe) {
-    return NextResponse.json({ error: "Stripe client unavailable." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Checkout is not configured yet.", code: "STRIPE_NOT_CONFIGURED" },
+      { status: 503 },
+    );
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) {
-    return NextResponse.json({ error: "User not found." }, { status: 404 });
+    return NextResponse.json({ error: "User not found.", code: "USER_NOT_FOUND" }, { status: 404 });
   }
 
-  let customerId = user.stripeCustomerId;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: user.name ?? undefined,
-      metadata: { userId: user.id },
+  let customerId: string;
+  try {
+    customerId = await ensureStripeCustomerForUser(user, stripe);
+  } catch (err) {
+    console.error("[stripe checkout] customer setup failed", {
+      userId: user.id,
+      code: (err as { code?: string }).code,
     });
-    customerId = customer.id;
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { stripeCustomerId: customerId },
-    });
+    return NextResponse.json(
+      { error: "Could not start checkout. Please try again.", code: "CUSTOMER_ERROR" },
+      { status: 500 },
+    );
   }
 
   const appUrl = getAppUrl();
 
-  const checkoutSession = await stripe.checkout.sessions.create({
+  const sessionParams = {
     customer: customerId,
-    mode: "subscription",
+    mode: "subscription" as const,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/app?checkout=success`,
-    cancel_url: `${appUrl}/pricing?checkout=canceled`,
-    metadata: { userId: user.id, plan },
-    subscription_data: {
-      metadata: { userId: user.id, plan },
+    success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/pricing?canceled=1`,
+    client_reference_id: user.id,
+    metadata: {
+      userId: user.id,
+      userEmail: user.email,
+      plan,
     },
-  });
+    subscription_data: {
+      metadata: {
+        userId: user.id,
+        userEmail: user.email,
+        plan,
+      },
+    },
+  };
 
-  if (!checkoutSession.url) {
-    return NextResponse.json({ error: "Could not create checkout session." }, { status: 500 });
+  try {
+    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
+
+    if (!checkoutSession.url) {
+      return NextResponse.json(
+        { error: "Could not start checkout. Please try again.", code: "SESSION_ERROR" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ url: checkoutSession.url });
+  } catch (err) {
+    if (isStaleStripeCustomerError(err)) {
+      console.warn("[stripe checkout] retrying with fresh customer", { userId: user.id });
+      try {
+        const freshCustomerId = await ensureStripeCustomerForUser(
+          { ...user, stripeCustomerId: null },
+          stripe,
+        );
+        const checkoutSession = await stripe.checkout.sessions.create({
+          ...sessionParams,
+          customer: freshCustomerId,
+        });
+        if (!checkoutSession.url) {
+          return NextResponse.json(
+            { error: "Could not start checkout. Please try again.", code: "SESSION_ERROR" },
+            { status: 500 },
+          );
+        }
+        return NextResponse.json({ url: checkoutSession.url });
+      } catch (retryErr) {
+        console.error("[stripe checkout] retry failed", {
+          userId: user.id,
+          code: (retryErr as { code?: string }).code,
+        });
+      }
+    } else {
+      console.error("[stripe checkout] session create failed", {
+        userId: user.id,
+        code: (err as { code?: string }).code,
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Could not start checkout. Please try again.", code: "CHECKOUT_FAILED" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ url: checkoutSession.url });
 }

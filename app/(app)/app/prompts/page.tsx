@@ -1,7 +1,7 @@
 import { PromptLibraryBrowser } from "@/components/prompts/prompt-library-browser";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { promptCategories } from "@/content/prompt-library";
-import { getCurrentUser, hasPaidAccess } from "@/lib/auth/session";
+import { getCurrentUserAccess } from "@/lib/user-access";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function PromptsPage() {
-  const user = await getCurrentUser();
-  const paid = hasPaidAccess(user ?? null);
+  const access = await getCurrentUserAccess();
+  const paid = access.paid;
 
   return (
     <div className="app-readable">

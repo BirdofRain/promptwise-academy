@@ -1,10 +1,11 @@
 import { signOut } from "@/lib/auth/actions";
-import { getSession, hasPaidAccess } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PortalButton } from "@/components/billing/portal-button";
+import { RefreshMembershipButton } from "@/components/billing/refresh-membership-button";
 import { ButtonLink } from "@/components/ui/button";
+import { getCurrentUserAccess } from "@/lib/user-access";
 import { USE_MOCK_AUTH } from "@/lib/auth/constants";
 import type { Metadata } from "next";
 
@@ -12,10 +13,24 @@ export const metadata: Metadata = {
   title: "Account",
 };
 
+function formatPlanLabel(plan: string | null): string {
+  if (plan === "yearly") return "Annual membership";
+  if (plan === "monthly") return "Monthly membership";
+  return "Membership";
+}
+
+function formatPeriodEnd(date: Date | null): string | null {
+  if (!date) return null;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default async function AccountPage() {
-  const session = await getSession();
-  const user = session?.user;
-  const paid = hasPaidAccess(user ?? null);
+  const access = await getCurrentUserAccess();
+  const { user, paid, subscriptionStatus, plan, currentPeriodEnd } = access;
 
   return (
     <div className="app-readable">
@@ -37,16 +52,34 @@ export default async function AccountPage() {
             <dt className="text-muted">Membership</dt>
             <dd className="mt-1">
               <Badge variant={paid ? "sage" : "gold"}>
-                {paid ? "Active member" : "Free preview"}
+                {paid ? "Membership active" : "Free preview"}
               </Badge>
             </dd>
           </div>
+          {paid && plan && (
+            <div>
+              <dt className="text-muted">Plan</dt>
+              <dd className="font-medium text-navy">{formatPlanLabel(plan)}</dd>
+            </div>
+          )}
+          {paid && currentPeriodEnd && (
+            <div>
+              <dt className="text-muted">Renews / ends</dt>
+              <dd className="font-medium text-navy">{formatPeriodEnd(currentPeriodEnd)}</dd>
+            </div>
+          )}
+          {!USE_MOCK_AUTH && subscriptionStatus !== "none" && (
+            <div>
+              <dt className="text-muted">Billing status</dt>
+              <dd className="font-medium capitalize text-navy">{subscriptionStatus.replace("_", " ")}</dd>
+            </div>
+          )}
         </dl>
 
         {!paid && (
           <div className="mt-6">
             <ButtonLink href="/pricing" size="lg">
-              Upgrade to full access
+              View membership options
             </ButtonLink>
           </div>
         )}
@@ -54,6 +87,12 @@ export default async function AccountPage() {
         {paid && !USE_MOCK_AUTH && (
           <div className="mt-6">
             <PortalButton />
+          </div>
+        )}
+
+        {!USE_MOCK_AUTH && (
+          <div className="mt-4">
+            <RefreshMembershipButton />
           </div>
         )}
 

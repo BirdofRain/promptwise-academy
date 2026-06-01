@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { PortalButton } from "@/components/billing/portal-button";
+import { getCurrentUserAccess } from "@/lib/user-access";
+import { USE_MOCK_AUTH } from "@/lib/auth/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -48,7 +51,10 @@ const faqs = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const access = await getCurrentUserAccess();
+  const { isAuthenticated, paid } = access;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
       <SectionHeading
@@ -59,15 +65,40 @@ export default function PricingPage() {
         className="mx-auto"
       />
 
-      <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
-        <p className="text-lg text-navy">
-          <strong>Free preview:</strong> 2 starter lessons + sample prompts.{" "}
-          <Link href="/signup" className="text-sage-dark underline">
-            Create a free account
-          </Link>{" "}
-          to begin.
-        </p>
-      </Card>
+      {!isAuthenticated && (
+        <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
+          <p className="text-lg text-navy">
+            <strong>Free preview:</strong> 2 starter lessons + sample prompts.{" "}
+            <Link href="/signup" className="text-sage-dark underline">
+              Create a free account
+            </Link>{" "}
+            to begin.
+          </p>
+        </Card>
+      )}
+
+      {isAuthenticated && paid && (
+        <Card className="mx-auto mt-8 max-w-2xl border-sage/30 bg-sage/5" padding="lg">
+          <p className="text-lg text-navy">
+            <strong>Membership active.</strong> You have full access to lessons, Prompt Lab, and
+            Master Prompt Builder.
+          </p>
+          {!USE_MOCK_AUTH && (
+            <div className="mt-4">
+              <PortalButton />
+            </div>
+          )}
+        </Card>
+      )}
+
+      {isAuthenticated && !paid && (
+        <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
+          <p className="text-lg text-navy">
+            <strong>Signed in as {access.user?.email}.</strong> Choose a plan below to unlock the
+            full academy.
+          </p>
+        </Card>
+      )}
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
         {plans.map((plan) => (
@@ -83,15 +114,25 @@ export default function PricingPage() {
               <span className="text-lg font-sans text-muted"> {plan.period}</span>
             </p>
             <CardDescription className="mt-4 text-base">{plan.description}</CardDescription>
-            <CheckoutButton plan={plan.id} className="mt-6">
-              Subscribe — {plan.name.toLowerCase()}
-            </CheckoutButton>
-            <p className="mt-3 text-center text-sm text-muted">
-              Requires sign-in.{" "}
-              <Link href="/login" className="underline">
-                Sign in first
-              </Link>
-            </p>
+            {paid ? (
+              <ButtonLink href="/app" variant="secondary" size="lg" className="mt-6 w-full">
+                Go to your academy
+              </ButtonLink>
+            ) : (
+              <>
+                <CheckoutButton plan={plan.id} className="mt-6">
+                  Subscribe — {plan.name.toLowerCase()}
+                </CheckoutButton>
+                {!isAuthenticated && (
+                  <p className="mt-3 text-center text-sm text-muted">
+                    Requires sign-in.{" "}
+                    <Link href="/login?callbackUrl=/pricing" className="underline">
+                      Sign in first
+                    </Link>
+                  </p>
+                )}
+              </>
+            )}
           </Card>
         ))}
       </div>
@@ -101,11 +142,13 @@ export default function PricingPage() {
         keys in your environment (see README).
       </p>
 
-      <div className="mt-8 text-center">
-        <ButtonLink href="/signup" variant="outline" size="lg">
-          Create free account first
-        </ButtonLink>
-      </div>
+      {!isAuthenticated && (
+        <div className="mt-8 text-center">
+          <ButtonLink href="/signup" variant="outline" size="lg">
+            Create free account first
+          </ButtonLink>
+        </div>
+      )}
 
       <section className="mt-16">
         <h2 className="font-serif text-2xl text-navy">Common questions</h2>

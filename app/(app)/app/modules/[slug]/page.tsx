@@ -6,8 +6,8 @@ import { ProgressBar } from "@/components/course/progress-bar";
 import { getModuleBySlug } from "@/content/modules";
 import { getLessonsByModule } from "@/content/lessons";
 import { getCourseProgress } from "@/lib/progress/compute";
-import { getCurrentUser } from "@/lib/auth/session";
-import { canAccessFullLesson } from "@/lib/entitlements";
+import { getCurrentUserAccess } from "@/lib/user-access";
+import { canAccessFullLessonFromAccess } from "@/lib/entitlements";
 import { CheckCircle2, Circle, Lock, PlayCircle } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -29,7 +29,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
   const moduleLessons = getLessonsByModule(slug);
   const progress = await getCourseProgress();
   const moduleProgress = progress.modules.find((m) => m.module.slug === slug);
-  const user = await getCurrentUser();
+  const access = await getCurrentUserAccess();
 
   return (
     <div className="app-readable">
@@ -60,7 +60,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
         {moduleLessons.map((lesson, index) => {
           const lessonProg = moduleProgress?.lessons.find((l) => l.slug === lesson.slug);
           const status = lessonProg?.status ?? "not_started";
-          const canOpen = canAccessFullLesson(user, lesson.slug);
+          const canOpen = canAccessFullLessonFromAccess(access, lesson.slug);
 
           return (
             <li key={lesson.slug}>

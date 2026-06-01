@@ -12,8 +12,8 @@ import { getModuleBySlug } from "@/content/modules";
 import { getPromptById, type PromptCard } from "@/content/prompt-library";
 import { UpgradeCTA } from "@/components/app/upgrade-cta";
 import { isLessonComplete } from "@/lib/progress/compute";
-import { getCurrentUser } from "@/lib/auth/session";
-import { canAccessFullLesson, getLessonGateMessage } from "@/lib/entitlements";
+import { getCurrentUserAccess } from "@/lib/user-access";
+import { canAccessFullLessonFromAccess, getLessonGateMessage } from "@/lib/entitlements";
 import type { Metadata } from "next";
 
 interface LessonPageProps {
@@ -37,8 +37,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const nextLesson = moduleLessons[lessonIndex + 1];
   const prevLesson = lessonIndex > 0 ? moduleLessons[lessonIndex - 1] : null;
   const complete = await isLessonComplete(slug);
-  const user = await getCurrentUser();
-  const hasFullAccess = canAccessFullLesson(user, slug);
+  const access = await getCurrentUserAccess();
+  const hasFullAccess = canAccessFullLessonFromAccess(access, slug);
 
   const relatedPrompts: PromptCard[] = lesson.relatedPromptIds
     .map((id) => getPromptById(id))

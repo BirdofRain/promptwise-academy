@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { UpgradeCTA } from "./upgrade-cta";
-import { hasPaidAccess, getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUserAccess } from "@/lib/user-access";
 
 export async function PaidFeatureGate({
   children,
@@ -9,8 +9,8 @@ export async function PaidFeatureGate({
   children: ReactNode;
   featureName: string;
 }) {
-  const user = await getCurrentUser();
-  if (hasPaidAccess(user)) {
+  const access = await getCurrentUserAccess();
+  if (access.paid) {
     return <>{children}</>;
   }
 

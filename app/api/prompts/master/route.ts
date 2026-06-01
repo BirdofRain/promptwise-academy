@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession, hasPaidAccess } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
+import { getCurrentUserAccess } from "@/lib/user-access";
 import { getOpenAIClient, isOpenAIConfigured } from "@/lib/openai";
 import {
   buildMasterPromptFromIdea,
@@ -25,7 +26,8 @@ export async function POST(request: Request) {
     if (!session) {
       return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
     }
-    if (!hasPaidAccess(session.user)) {
+    const access = await getCurrentUserAccess();
+    if (!access.paid) {
       return NextResponse.json(
         { error: "An active membership is required." },
         { status: 403 },

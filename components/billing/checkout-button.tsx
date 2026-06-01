@@ -12,6 +12,23 @@ interface CheckoutButtonProps {
   variant?: "primary" | "secondary" | "outline";
 }
 
+function friendlyCheckoutError(data: {
+  error?: string;
+  code?: string;
+  hint?: string;
+}): string {
+  switch (data.code) {
+    case "NOT_SIGNED_IN":
+      return "Please sign in first.";
+    case "STRIPE_NOT_CONFIGURED":
+    case "PRICE_NOT_CONFIGURED":
+    case "AUTH_NOT_READY":
+      return "Checkout is not configured yet.";
+    default:
+      return data.error ?? "Could not start checkout. Please try again.";
+  }
+}
+
 export function CheckoutButton({
   plan,
   children,
@@ -30,10 +47,15 @@ export function CheckoutButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
-      const data = (await res.json()) as { url?: string; error?: string; hint?: string };
+      const data = (await res.json()) as {
+        url?: string;
+        error?: string;
+        code?: string;
+        hint?: string;
+      };
 
       if (!res.ok) {
-        setError(data.hint ? `${data.error} ${data.hint}` : data.error ?? "Checkout unavailable.");
+        setError(friendlyCheckoutError(data));
         return;
       }
 

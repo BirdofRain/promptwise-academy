@@ -2,67 +2,48 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
-import { upsertSubscriptionFromStripe } from "@/lib/subscription";
-import type { SubscriptionStatus } from "@/lib/auth/types";
+import {
+  resolveUserIdFromCheckoutSession,
+  resolveUserIdFromSubscription,
+  upsertSubscriptionFromStripeSubscription,
+} from "@/lib/stripe-sync";
 
 export const runtime = "nodejs";
 
-function subscriptionPeriodEnd(sub: Stripe.Subscription): Date | null {
-  const end = (sub as Stripe.Subscription & { current_period_end?: number }).current_period_end;
-  return end ? new Date(end * 1000) : null;
-}
-
-function mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
-  switch (status) {
-    case "active":
-      return "active";
-    case "trialing":
-      return "trialing";
-    case "past_due":
-      return "past_due";
-    case "canceled":
-    case "unpaid":
-    case "incomplete_expired":
-      return "canceled";
-    default:
-      return "none";
-  }
-}
-
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.userId;
+  const userId = await resolveUserIdFromCheckoutSession(session);
   if (!userId || !session.subscription) return;
 
   const stripe = getStripe();
   if (!stripe) return;
+
+  const customerId =
+    typeof session.customer === "string" ? session.customer : session.customer?.id;
+  if (customerId) {
+    await prisma.user.updateMany({
+      where: { id: userId },
+      data: { stripeCustomerId: customerId },
+    });
+  }
 
   const sub =
     typeof session.subscription === "string"
       ? await stripe.subscriptions.retrieve(session.subscription)
       : session.subscription;
 
-  await upsertSubscriptionFromStripe({
-    userId,
-    status: mapStripeSubscriptionStatus(sub.status),
-    plan: session.metadata?.plan ?? null,
-    stripeSubscriptionId: sub.id,
-    stripePriceId: sub.items.data[0]?.price.id ?? null,
-    currentPeriodEnd: subscriptionPeriodEnd(sub),
-  });
+  await upsertSubscriptionFromStripeSubscription(userId, sub, session.metadata?.plan);
 }
 
 async function handleSubscriptionChange(sub: Stripe.Subscription) {
-  const userId = sub.metadata?.userId;
+  const userId = await resolveUserIdFromSubscription(sub);
   if (!userId) return;
 
-  await upsertSubscriptionFromStripe({
-    userId,
-    status: mapStripeSubscriptionStatus(sub.status),
-    plan: sub.metadata?.plan ?? null,
-    stripeSubscriptionId: sub.id,
-    stripePriceId: sub.items.data[0]?.price.id ?? null,
-    currentPeriodEnd: subscriptionPeriodEnd(sub),
-  });
+  if (sub.status === "canceled" || sub.status === "unpaid" || sub.status === "incomplete_expired") {
+    await upsertSubscriptionFromStripeSubscription(userId, sub, sub.metadata?.plan);
+    return;
+  }
+
+  await upsertSubscriptionFromStripeSubscription(userId, sub, sub.metadata?.plan);
 }
 
 export async function POST(request: Request) {
