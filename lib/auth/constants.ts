@@ -1,8 +1,9 @@
-/** Cookie name for mock session; replace with Auth.js session when wired up. */
+/** Cookie name for mock session when AUTH_MODE=mock */
 export const SESSION_COOKIE_NAME = "pw_session";
 
-/** Set to false when Auth.js is configured. */
-export const USE_MOCK_AUTH = true;
+/** mock = dev cookie auth | authjs = Auth.js + Prisma */
+export const AUTH_MODE = process.env.AUTH_MODE ?? "mock";
 
-/** Mock users can access paid content when status is active or trialing. */
+export const USE_MOCK_AUTH = AUTH_MODE === "mock";
+
 export const PAID_STATUSES = ["active", "trialing"] as const;

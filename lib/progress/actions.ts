@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCompletedLessonSlugs, setCompletedLessonSlugs } from "./store";
+import {
+  markLessonCompleteForUser,
+  unmarkLessonCompleteForUser,
+} from "./store";
 
 export async function markLessonComplete(lessonSlug: string) {
-  const current = await getCompletedLessonSlugs();
-  if (!current.includes(lessonSlug)) {
-    await setCompletedLessonSlugs([...current, lessonSlug]);
-  }
+  await markLessonCompleteForUser(lessonSlug);
   revalidatePath("/app");
   revalidatePath("/app/lessons");
   revalidatePath(`/app/lessons/${lessonSlug}`);
@@ -15,8 +15,7 @@ export async function markLessonComplete(lessonSlug: string) {
 }
 
 export async function unmarkLessonComplete(lessonSlug: string) {
-  const current = await getCompletedLessonSlugs();
-  await setCompletedLessonSlugs(current.filter((s) => s !== lessonSlug));
+  await unmarkLessonCompleteForUser(lessonSlug);
   revalidatePath("/app");
   revalidatePath("/app/lessons");
   revalidatePath(`/app/lessons/${lessonSlug}`);

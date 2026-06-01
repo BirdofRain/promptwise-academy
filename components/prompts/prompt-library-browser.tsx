@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PromptCardItem } from "./prompt-card";
+import { UpgradeCTA } from "@/components/app/upgrade-cta";
 import {
   promptCategories,
   promptLibrary,
@@ -9,7 +10,11 @@ import {
   type PromptDifficulty,
 } from "@/content/prompt-library";
 
-export function PromptLibraryBrowser() {
+interface PromptLibraryBrowserProps {
+  isPaid: boolean;
+}
+
+export function PromptLibraryBrowser({ isPaid }: PromptLibraryBrowserProps) {
   const [category, setCategory] = useState<PromptCategory | "all">("all");
   const [difficulty, setDifficulty] = useState<PromptDifficulty | "all">("all");
   const [search, setSearch] = useState("");
@@ -29,6 +34,11 @@ export function PromptLibraryBrowser() {
       return true;
     });
   }, [category, difficulty, search]);
+
+  const accessible = isPaid
+    ? filtered.filter((c) => !c.comingSoon)
+    : filtered.filter((c) => c.isFreeSample && !c.comingSoon);
+  const locked = isPaid ? [] : filtered.filter((c) => !c.isFreeSample && !c.comingSoon);
 
   return (
     <div>
@@ -53,15 +63,17 @@ export function PromptLibraryBrowser() {
             <FilterChip active={category === "all"} onClick={() => setCategory("all")}>
               All
             </FilterChip>
-            {promptCategories.map((cat) => (
-              <FilterChip
-                key={cat.id}
-                active={category === cat.id}
-                onClick={() => setCategory(cat.id)}
-              >
-                {cat.label}
-              </FilterChip>
-            ))}
+            {promptCategories
+              .filter((c) => !c.comingSoon)
+              .map((cat) => (
+                <FilterChip
+                  key={cat.id}
+                  active={category === cat.id}
+                  onClick={() => setCategory(cat.id)}
+                >
+                  {cat.label}
+                </FilterChip>
+              ))}
           </div>
         </div>
 
@@ -81,20 +93,42 @@ export function PromptLibraryBrowser() {
         </div>
       </div>
 
-      <p className="mt-6 text-lg text-muted">
-        Showing {filtered.length} prompt{filtered.length === 1 ? "" : "s"}
-      </p>
+      {!isPaid && (
+        <p className="mt-6 text-lg text-muted">
+          Free samples: {accessible.length} prompt{accessible.length === 1 ? "" : "s"} available
+          to copy. Subscribe for the full library ({locked.length}+ more).
+        </p>
+      )}
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
-        {filtered.map((card) => (
+        {accessible.map((card) => (
           <PromptCardItem key={card.id} card={card} />
         ))}
       </div>
 
-      {filtered.length === 0 && (
-        <p className="mt-8 text-center text-lg text-muted">
-          No prompts match your filters. Try clearing search or choosing a different category.
-        </p>
+      {locked.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-serif text-2xl text-navy">Members-only prompts</h2>
+          <p className="mt-2 text-lg text-muted">
+            {locked.length} more prompts unlock with a membership.
+          </p>
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {locked.slice(0, 4).map((card) => (
+              <div key={card.id} className="relative">
+                <div className="pointer-events-none select-none opacity-40 blur-[2px]">
+                  <PromptCardItem card={card} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <UpgradeCTA />
+          </div>
+        </section>
+      )}
+
+      {accessible.length === 0 && locked.length === 0 && (
+        <p className="mt-8 text-center text-lg text-muted">No prompts match your filters.</p>
       )}
     </div>
   );

@@ -6,6 +6,8 @@ import {
   MASTER_BUILDER_SYSTEM_PROMPT,
   type MasterDepth,
 } from "@/lib/prompt-master-template";
+import { prisma, isDatabaseConfigured } from "@/lib/db";
+import { isAuthJsEnabled } from "@/auth";
 
 export const runtime = "nodejs";
 
@@ -47,9 +49,23 @@ export async function POST(request: Request) {
       depth: body.depth ?? "balanced",
     };
 
+    async function saveHistory(prompt: string, source: string) {
+      if (!isDatabaseConfigured() || !isAuthJsEnabled) return;
+      await prisma.promptBuilderHistory.create({
+        data: {
+          userId: session!.user.id,
+          idea,
+          prompt,
+          source,
+        },
+      });
+    }
+
     if (!isOpenAIConfigured()) {
+      const prompt = buildMasterPromptFromIdea(input);
+      await saveHistory(prompt, "template");
       return NextResponse.json({
-        prompt: buildMasterPromptFromIdea(input),
+        prompt,
         source: "template" as const,
       });
     }
@@ -84,13 +100,16 @@ Write the complete master prompt.`;
 
     const aiPrompt = completion.choices[0]?.message?.content?.trim();
     if (!aiPrompt) {
+      const prompt = buildMasterPromptFromIdea(input);
+      await saveHistory(prompt, "template");
       return NextResponse.json({
-        prompt: buildMasterPromptFromIdea(input),
+        prompt,
         source: "template" as const,
         message: "AI response was empty; using template instead.",
       });
     }
 
+    await saveHistory(aiPrompt, "openai");
     return NextResponse.json({
       prompt: aiPrompt,
       source: "openai" as const,

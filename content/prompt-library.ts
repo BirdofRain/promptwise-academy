@@ -22,6 +22,8 @@ export interface PromptCard {
   difficulty: PromptDifficulty;
   tags?: string[];
   comingSoon?: boolean;
+  /** Free accounts can copy this prompt */
+  isFreeSample?: boolean;
 }
 
 export const difficultyLabels: Record<PromptDifficulty, string> = {
@@ -113,6 +115,7 @@ Goal: Write 2 versions of a short encouragement text (under 80 words each): one 
 Tone: Sincere, not dramatic. No clichés.
 Output: Label each version. Do not send — I will edit.`,
     tags: ["text", "friend"],
+    isFreeSample: true,
   },
   {
     id: "rel-check-in-elder",
@@ -242,6 +245,7 @@ Tone: Warm, respectful, never condescending.
 Output: Short sections with bullet points.
 Before you answer, ask me 2 clarifying questions.`,
     tags: ["starter"],
+    isFreeSample: true,
   },
   {
     id: "plan-goal-clarity",
@@ -274,6 +278,7 @@ Goal: Suggest a gentle weekly rhythm (not a rigid schedule) with anchors for pri
 Tone: Encouraging, realistic.
 Output: Table by day with morning/afternoon/evening themes.`,
     tags: ["weekly"],
+    isFreeSample: true,
   },
   {
     id: "plan-gentle-habit",
@@ -429,6 +434,7 @@ Goal: Draft an email under 150 words: clear subject line, purpose in line 1, bul
 Tone: Warm and professional — not stiff.
 Output: Subject + body.`,
     tags: ["email"],
+    isFreeSample: true,
   },
   {
     id: "work-meeting-agenda",
@@ -490,6 +496,7 @@ Goal: Give me 12 journaling questions — no advice yet — that help me process
 
 Tone: Quiet, wise.`,
     tags: ["journal"],
+    isFreeSample: true,
   },
   {
     id: "journal-gratitude-deep",
@@ -581,6 +588,7 @@ Before you give advice or a draft, ask me up to 5 clarifying questions — one a
 
 After I answer, provide your best response in plain, warm language.`,
     tags: ["formula"],
+    isFreeSample: true,
   },
   {
     id: "basics-formula-practice",

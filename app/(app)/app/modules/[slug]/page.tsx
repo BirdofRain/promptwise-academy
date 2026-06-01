@@ -6,7 +6,9 @@ import { ProgressBar } from "@/components/course/progress-bar";
 import { getModuleBySlug } from "@/content/modules";
 import { getLessonsByModule } from "@/content/lessons";
 import { getCourseProgress } from "@/lib/progress/compute";
-import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth/session";
+import { canAccessFullLesson } from "@/lib/entitlements";
+import { CheckCircle2, Circle, Lock, PlayCircle } from "lucide-react";
 import type { Metadata } from "next";
 
 interface ModulePageProps {
@@ -27,6 +29,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
   const moduleLessons = getLessonsByModule(slug);
   const progress = await getCourseProgress();
   const moduleProgress = progress.modules.find((m) => m.module.slug === slug);
+  const user = await getCurrentUser();
 
   return (
     <div className="app-readable">
@@ -57,6 +60,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
         {moduleLessons.map((lesson, index) => {
           const lessonProg = moduleProgress?.lessons.find((l) => l.slug === lesson.slug);
           const status = lessonProg?.status ?? "not_started";
+          const canOpen = canAccessFullLesson(user, lesson.slug);
 
           return (
             <li key={lesson.slug}>
@@ -64,7 +68,9 @@ export default async function ModulePage({ params }: ModulePageProps) {
                 <Card className="transition-shadow hover:shadow-md" padding="lg">
                   <div className="flex gap-4">
                     <div className="mt-1 shrink-0">
-                      {status === "complete" ? (
+                      {!canOpen ? (
+                        <Lock className="h-7 w-7 text-gold-dark" aria-label="Members only" />
+                      ) : status === "complete" ? (
                         <CheckCircle2 className="h-7 w-7 text-sage-dark" aria-label="Complete" />
                       ) : status === "in_progress" ? (
                         <PlayCircle className="h-7 w-7 text-gold-dark" aria-label="In progress" />
@@ -87,7 +93,8 @@ export default async function ModulePage({ params }: ModulePageProps) {
                         {status === "in_progress" && (
                           <Badge variant="gold">Continue here</Badge>
                         )}
-                        {status === "not_started" && (
+                        {!canOpen && <Badge variant="gold">Preview / upgrade</Badge>}
+                        {canOpen && status === "not_started" && (
                           <Badge variant="muted">Not started</Badge>
                         )}
                       </div>

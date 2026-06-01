@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser, getSession, hasPaidAccess } from "@/lib/auth/session";
 
+export {
+  canAccessFullLesson,
+  canAccessPromptLab,
+  canAccessMasterBuilder,
+  canAccessPromptCard,
+  isPreviewLesson,
+} from "@/lib/entitlements";
+
 export async function requireAuth(redirectTo = "/login") {
   const session = await getSession();
   if (!session) {

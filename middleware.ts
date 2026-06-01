@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { auth } from "@/auth";
+import { SESSION_COOKIE_NAME, USE_MOCK_AUTH } from "@/lib/auth/constants";
 
-const protectedPrefixes = ["/app"];
-
-function hasValidSessionCookie(request: NextRequest): boolean {
+function hasValidMockSession(request: NextRequest): boolean {
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!raw) return false;
   try {
@@ -16,20 +15,32 @@ function hasValidSessionCookie(request: NextRequest): boolean {
   }
 }
 
-export function middleware(request: NextRequest) {
+function mockMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isProtected = protectedPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  const isProtected =
+    pathname === "/app" || pathname.startsWith("/app/");
 
-  if (isProtected && !hasValidSessionCookie(request)) {
+  if (isProtected && !hasValidMockSession(request)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
-
   return NextResponse.next();
 }
+
+const authJsMiddleware = auth((request) => {
+  const { pathname } = request.nextUrl;
+  const isProtected = pathname === "/app" || pathname.startsWith("/app/");
+
+  if (isProtected && !request.auth) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+  return NextResponse.next();
+});
+
+export default USE_MOCK_AUTH ? mockMiddleware : authJsMiddleware;
 
 export const config = {
   matcher: ["/app/:path*"],
