@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
     }
     const access = await getCurrentUserAccess();
-    if (!access.paid) {
+    if (!access.hasFullAccess) {
       return NextResponse.json(
         { error: "An active membership is required." },
         { status: 403 },

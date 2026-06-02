@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { PaywallNotice } from "@/components/app/paywall-notice";
+import { AccessBanner } from "@/components/app/access-banner";
 import { requireAuth } from "@/lib/access";
 import { getCurrentUserAccess } from "@/lib/user-access";
 
@@ -13,7 +13,7 @@ export default async function AppLayout({
 
   return (
     <AppShell>
-      {!access.paid && <PaywallNotice />}
+      <AccessBanner access={access} />
       {children}
     </AppShell>
   );

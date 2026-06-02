@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function PromptsPage() {
   const access = await getCurrentUserAccess();
-  const paid = access.paid;
+  const paid = access.hasFullAccess;
 
   return (
     <div className="app-readable">

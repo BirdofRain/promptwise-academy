@@ -10,7 +10,7 @@ export async function PaidFeatureGate({
   featureName: string;
 }) {
   const access = await getCurrentUserAccess();
-  if (access.paid) {
+  if (access.hasFullAccess) {
     return <>{children}</>;
   }
 

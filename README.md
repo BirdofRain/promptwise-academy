@@ -96,10 +96,13 @@ Details: [docs/AUTH.md](docs/AUTH.md)
 
 | Tier | Access |
 |------|--------|
-| **Free (signed in)** | 2 preview lessons, sample prompts (`isFreeSample`), dashboard |
-| **Paid** (`active` / `trialing`) | All lessons, full prompt library, Prompt Lab, Master Builder |
+| **Free preview (signed in)** | 2 preview lessons, sample prompts (`isFreeSample`), dashboard |
+| **7-day app trial (no card)** | Full academy for 7 days — one trial per account |
+| **Paid** (Stripe `active` / `trialing`) | All lessons, full prompt library, Prompt Lab, Master Builder |
 
 Configure preview lessons in `lib/entitlements.ts` (`FREE_PREVIEW_LESSON_SLUGS`).
+
+**Free trial:** See [docs/TRIALS.md](docs/TRIALS.md) for how the no-card trial works, resetting test users, and how it interacts with Stripe.
 
 ## Stripe setup
 

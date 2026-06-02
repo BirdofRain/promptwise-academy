@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { PortalButton } from "@/components/billing/portal-button";
+import { StartTrialButton } from "@/components/billing/start-trial-button";
 import { getCurrentUserAccess } from "@/lib/user-access";
 import { USE_MOCK_AUTH } from "@/lib/auth/constants";
 import type { Metadata } from "next";
@@ -34,8 +35,12 @@ const plans = [
 
 const faqs = [
   {
-    q: "What do I get for free?",
-    a: "Create an account to access 2 starter lessons and a handful of sample prompts. No credit card required to look around.",
+    q: "Is there a free trial?",
+    a: "Yes. Create an account and start a free 7-day trial — no credit card required. You get full access to lessons, Prompt Lab, and the prompt library instantly.",
+  },
+  {
+    q: "What do I get for free without a trial?",
+    a: "You can browse with 2 starter lessons and sample prompts before starting your trial or subscribing.",
   },
   {
     q: "Do I need to be technical?",
@@ -53,14 +58,22 @@ const faqs = [
 
 export default async function PricingPage() {
   const access = await getCurrentUserAccess();
-  const { isAuthenticated, paid } = access;
+  const {
+    isAuthenticated,
+    isPaidSubscription,
+    hasFullAccess,
+    isTrialing,
+    trialAvailable,
+    trialExpired,
+    trialDaysRemaining,
+  } = access;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
       <SectionHeading
         eyebrow="Pricing"
         title="Simple, calm, and transparent"
-        description="One membership. All lessons, the full prompt library, Prompt Lab, and Master Prompt Builder."
+        description="Try everything free for 7 days — no card required. Or subscribe when you're ready."
         align="center"
         className="mx-auto"
       />
@@ -68,16 +81,16 @@ export default async function PricingPage() {
       {!isAuthenticated && (
         <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
           <p className="text-lg text-navy">
-            <strong>Free preview:</strong> 2 starter lessons + sample prompts.{" "}
+            <strong>Start with a free 7-day trial.</strong> Create an account to unlock all lessons
+            and tools instantly — no credit card required.{" "}
             <Link href="/signup" className="text-sage-dark underline">
               Create a free account
-            </Link>{" "}
-            to begin.
+            </Link>
           </p>
         </Card>
       )}
 
-      {isAuthenticated && paid && (
+      {isAuthenticated && isPaidSubscription && (
         <Card className="mx-auto mt-8 max-w-2xl border-sage/30 bg-sage/5" padding="lg">
           <p className="text-lg text-navy">
             <strong>Membership active.</strong> You have full access to lessons, Prompt Lab, and
@@ -91,16 +104,72 @@ export default async function PricingPage() {
         </Card>
       )}
 
-      {isAuthenticated && !paid && (
-        <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
+      {isAuthenticated && isTrialing && !isPaidSubscription && (
+        <Card className="mx-auto mt-8 max-w-2xl border-sage/30 bg-sage/5" padding="lg">
           <p className="text-lg text-navy">
-            <strong>Signed in as {access.user?.email}.</strong> Choose a plan below to unlock the
-            full academy.
+            <strong>Your trial is active</strong>
+            {trialDaysRemaining != null && (
+              <> — {trialDaysRemaining === 1 ? "1 day" : `${trialDaysRemaining} days`} remaining</>
+            )}
+            . Unlock the full academy today, or subscribe anytime to keep learning after your trial.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <ButtonLink href="/app" size="lg">
+              Go to your academy
+            </ButtonLink>
+            <ButtonLink href="#plans" variant="outline" size="lg">
+              Upgrade anytime
+            </ButtonLink>
+          </div>
+        </Card>
+      )}
+
+      {isAuthenticated && trialExpired && !isPaidSubscription && (
+        <Card className="mx-auto mt-8 max-w-2xl border-gold/30 bg-gold/10" padding="lg">
+          <p className="text-lg text-navy">
+            <strong>Your free trial has ended.</strong> Subscribe below to keep full access to
+            lessons, Prompt Lab, and the complete prompt library.
           </p>
         </Card>
       )}
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2">
+      {isAuthenticated && trialAvailable && (
+        <Card className="mx-auto mt-8 max-w-2xl ring-2 ring-sage/30" padding="lg">
+          <Badge variant="sage" className="mb-3">
+            Recommended
+          </Badge>
+          <CardTitle className="text-2xl">Start your free 7-day trial</CardTitle>
+          <CardDescription className="mt-3 text-base">
+            No card required. Unlock all lessons, Prompt Lab, Master Prompt Builder, and the full
+            prompt library instantly.
+          </CardDescription>
+          {!USE_MOCK_AUTH ? (
+            <StartTrialButton className="mt-6">
+              Start free 7-day trial — no card required
+            </StartTrialButton>
+          ) : (
+            <p className="mt-4 text-base text-muted">
+              Free trial is stored in the database when AUTH_MODE=authjs. In mock mode, choose
+              &quot;Trialing&quot; in the dev sign-in form to simulate full access.
+            </p>
+          )}
+        </Card>
+      )}
+
+      {isAuthenticated &&
+        !isPaidSubscription &&
+        !trialAvailable &&
+        !isTrialing &&
+        !trialExpired && (
+          <Card className="mx-auto mt-8 max-w-2xl" padding="lg">
+            <p className="text-lg text-navy">
+              <strong>Signed in as {access.user?.email}.</strong> Choose a plan below to unlock
+              the full academy.
+            </p>
+          </Card>
+        )}
+
+      <div id="plans" className="mt-12 grid gap-6 md:grid-cols-2">
         {plans.map((plan) => (
           <Card
             key={plan.name}
@@ -114,7 +183,7 @@ export default async function PricingPage() {
               <span className="text-lg font-sans text-muted"> {plan.period}</span>
             </p>
             <CardDescription className="mt-4 text-base">{plan.description}</CardDescription>
-            {paid ? (
+            {hasFullAccess && isPaidSubscription ? (
               <ButtonLink href="/app" variant="secondary" size="lg" className="mt-6 w-full">
                 Go to your academy
               </ButtonLink>
@@ -138,14 +207,14 @@ export default async function PricingPage() {
       </div>
 
       <p className="mt-8 text-center text-base text-muted">
-        Stripe opens in a secure checkout window. If checkout is unavailable, configure Stripe
-        keys in your environment (see README).
+        Stripe checkout is secure. Your 7-day trial does not require a card — only a paid
+        subscription uses Stripe.
       </p>
 
       {!isAuthenticated && (
         <div className="mt-8 text-center">
           <ButtonLink href="/signup" variant="outline" size="lg">
-            Create free account first
+            Create free account to start your trial
           </ButtonLink>
         </div>
       )}

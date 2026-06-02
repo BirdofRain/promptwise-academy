@@ -16,20 +16,20 @@ export function isPreviewLesson(slug: string): boolean {
 
 /** Prefer getCurrentUserAccess() + these helpers for server-side paywall checks. */
 export function canAccessFullLessonFromAccess(access: UserAccess, lessonSlug: string): boolean {
-  if (access.paid) return true;
+  if (access.hasFullAccess) return true;
   return isPreviewLesson(lessonSlug);
 }
 
 export function canAccessPromptLabFromAccess(access: UserAccess): boolean {
-  return access.paid;
+  return access.hasFullAccess;
 }
 
 export function canAccessMasterBuilderFromAccess(access: UserAccess): boolean {
-  return access.paid;
+  return access.hasFullAccess;
 }
 
 export function canAccessPromptCardFromAccess(access: UserAccess, card: PromptCard): boolean {
-  if (access.paid) return true;
+  if (access.hasFullAccess) return true;
   if (card.comingSoon) return false;
   return Boolean(card.isFreeSample);
 }
@@ -48,7 +48,7 @@ export function filterPromptsForAccess<T extends PromptCard>(
 }
 
 export function canAccessModuleLessonsFromAccess(access: UserAccess, moduleSlug: string): boolean {
-  if (access.paid) return true;
+  if (access.hasFullAccess) return true;
   return moduleSlug === "start-here";
 }
 

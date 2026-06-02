@@ -21,7 +21,7 @@ export async function requireAuth(redirectTo = "/login") {
 export async function requirePaidAccess(redirectTo = "/pricing") {
   await requireAuth();
   const access = await getCurrentUserAccess();
-  if (!access.paid) {
+  if (!access.hasFullAccess) {
     redirect(`${redirectTo}?reason=subscription`);
   }
   return access;
