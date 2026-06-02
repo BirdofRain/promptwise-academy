@@ -1,5 +1,5 @@
 import { prisma, isDatabaseConfigured } from "@/lib/db";
-import { getSession, hasPaidAccess } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { USE_MOCK_AUTH } from "@/lib/auth/constants";
 import { isAuthJsEnabled } from "@/auth";
 import { prismaToAppStatus } from "@/lib/subscription";

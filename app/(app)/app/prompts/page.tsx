@@ -1,12 +1,20 @@
+import { Suspense } from "react";
 import { PromptLibraryBrowser } from "@/components/prompts/prompt-library-browser";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { promptCategories } from "@/content/prompt-library";
 import { getCurrentUserAccess } from "@/lib/user-access";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Prompt library",
 };
+
+function PromptLibraryFallback() {
+  return (
+    <div className="mt-8 rounded-xl border border-navy/10 bg-white p-8 text-center text-lg text-muted">
+      Loading prompts…
+    </div>
+  );
+}
 
 export default async function PromptsPage() {
   const access = await getCurrentUserAccess();
@@ -18,25 +26,16 @@ export default async function PromptsPage() {
         title="Prompt library"
         description={
           paid
-            ? "Copy-ready examples for real life. Paste into ChatGPT, answer follow-up questions, then edit in your voice."
-            : "Sample prompts are free. Subscribe for the complete library, Prompt Lab, and Master Prompt Builder."
+            ? "Search or pick a topic, then copy a prompt into ChatGPT. Answer follow-up questions, then edit in your voice."
+            : "Sample prompts are free. Start your trial or subscribe for the full library, Prompt Lab, and Master Prompt Builder."
         }
       />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {promptCategories
-          .filter((c) => !c.comingSoon)
-          .map((cat) => (
-            <div key={cat.id} className="rounded-xl border border-navy/10 bg-white p-5">
-              <p className="text-lg font-medium text-navy">{cat.label}</p>
-              <p className="mt-1 text-base text-muted">{cat.description}</p>
-            </div>
-          ))}
-      </div>
-
-      <div className="mt-12">
-        <PromptLibraryBrowser isPaid={paid} />
-      </div>
+      <Suspense fallback={<PromptLibraryFallback />}>
+        <div className="mt-6">
+          <PromptLibraryBrowser isPaid={paid} />
+        </div>
+      </Suspense>
     </div>
   );
 }
