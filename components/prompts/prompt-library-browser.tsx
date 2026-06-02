@@ -138,7 +138,7 @@ export function PromptLibraryBrowser({ isPaid }: PromptLibraryBrowserProps) {
             </button>
           )}
         </div>
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <CategoryJumpCard
             label="All topics"
             description="Every prompt in the library"
@@ -227,7 +227,7 @@ function CategoryJumpCard({
     <button
       type="button"
       onClick={onClick}
-      className={`min-w-[11rem] max-w-[14rem] shrink-0 snap-start rounded-xl border p-4 text-left transition-shadow ${
+      className={`h-full rounded-xl border p-4 text-left transition-shadow ${
         active
           ? "border-sage bg-sage/10 shadow-md ring-2 ring-sage/40"
           : "border-navy/10 bg-white hover:border-sage/40 hover:shadow-md"

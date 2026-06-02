@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { PromptLibraryBrowser } from "@/components/prompts/prompt-library-browser";
+import { PromptLibraryTools } from "@/components/prompts/prompt-library-tools";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getCurrentUserAccess } from "@/lib/user-access";
 import type { Metadata } from "next";
@@ -26,13 +27,17 @@ export default async function PromptsPage() {
         title="Prompt library"
         description={
           paid
-            ? "Search or pick a topic, then copy a prompt into ChatGPT. Answer follow-up questions, then edit in your voice."
-            : "Sample prompts are free. Start your trial or subscribe for the full library, Prompt Lab, and Master Prompt Builder."
+            ? "Copy a ready-made prompt, or build your own in Prompt Lab and Master Prompt Builder."
+            : "Sample prompts are free. Start your trial or subscribe for the full library and building tools."
         }
       />
 
+      <div className="mt-6">
+        <PromptLibraryTools />
+      </div>
+
       <Suspense fallback={<PromptLibraryFallback />}>
-        <div className="mt-6">
+        <div className="mt-8">
           <PromptLibraryBrowser isPaid={paid} />
         </div>
       </Suspense>

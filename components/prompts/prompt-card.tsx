@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { FlaskConical } from "lucide-react";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +8,7 @@ import {
   difficultyLabels,
   promptCategories,
 } from "@/content/prompt-library";
+import { promptLabUrlForCard } from "@/lib/prompt-lab-import";
 
 const difficultyVariant: Record<
   PromptCardType["difficulty"],
@@ -39,9 +42,19 @@ export function PromptCardItem({ card }: { card: PromptCardType }) {
           <pre className="mt-4 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-cream-dark p-4 text-base leading-relaxed text-navy">
             {card.prompt}
           </pre>
-          <div className="mt-5">
-            <CopyButton text={card.prompt} label="Copy prompt" />
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href={promptLabUrlForCard(card.id)}
+              className="inline-flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-lg bg-sage px-5 py-3 text-lg font-medium text-cream shadow-sm transition-colors hover:bg-sage-dark sm:flex-none sm:min-w-[14rem]"
+            >
+              <FlaskConical className="h-5 w-5" aria-hidden />
+              Customize in Prompt Lab
+            </Link>
+            <CopyButton text={card.prompt} label="Copy as-is" className="sm:flex-1" />
           </div>
+          <p className="mt-2 text-sm text-muted">
+            Customize opens this prompt in Prompt Lab so you can add your details before copying.
+          </p>
         </>
       )}
     </Card>

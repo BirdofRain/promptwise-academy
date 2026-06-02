@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Card } from "@/components/ui/card";
+import { getPromptById } from "@/content/prompt-library";
+import { getLabSeedFromPromptCard } from "@/lib/prompt-lab-import";
 import {
   buildPromptFromFormula,
   formulaExamples,
   formulaFields,
   type FormulaValues,
 } from "@/lib/prompt-lab";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Library } from "lucide-react";
 
 const emptyValues: FormulaValues = {
   role: "",
@@ -21,22 +24,72 @@ const emptyValues: FormulaValues = {
   followUp: "",
 };
 
-export function PromptLabForm() {
-  const [values, setValues] = useState<FormulaValues>(emptyValues);
+interface PromptLabFormProps {
+  initialPromptId?: string | null;
+}
+
+function initialStateForPromptId(promptId?: string | null): {
+  values: FormulaValues;
+  loadedFrom: { title: string; id: string } | null;
+} {
+  if (!promptId) {
+    return { values: emptyValues, loadedFrom: null };
+  }
+  const card = getPromptById(promptId);
+  if (!card) {
+    return { values: emptyValues, loadedFrom: null };
+  }
+  return {
+    values: getLabSeedFromPromptCard(card),
+    loadedFrom: { title: card.title, id: card.id },
+  };
+}
+
+export function PromptLabForm({ initialPromptId }: PromptLabFormProps) {
+  const [values, setValues] = useState<FormulaValues>(
+    () => initialStateForPromptId(initialPromptId).values,
+  );
+  const [loadedFrom, setLoadedFrom] = useState<{ title: string; id: string } | null>(
+    () => initialStateForPromptId(initialPromptId).loadedFrom,
+  );
 
   const prompt = useMemo(() => buildPromptFromFormula(values), [values]);
 
   function loadExample(example: (typeof formulaExamples)[0]) {
     setValues(example.values as FormulaValues);
+    setLoadedFrom(null);
   }
 
   function clearForm() {
     setValues(emptyValues);
+    setLoadedFrom(null);
   }
 
   return (
     <div className="grid gap-10 xl:grid-cols-2">
       <div className="space-y-6">
+        {loadedFrom && (
+          <Card padding="lg" className="border-sage/30 bg-sage/5">
+            <div className="flex gap-3">
+              <Library className="h-6 w-6 shrink-0 text-sage-dark" aria-hidden />
+              <div>
+                <h3 className="font-serif text-xl text-navy">Loaded from the prompt library</h3>
+                <p className="mt-2 text-lg text-muted">
+                  <strong>{loadedFrom.title}</strong> — edit each box below with your names,
+                  situation, and details. Replace placeholders like{" "}
+                  <span className="font-medium text-navy">[NAME]</span> with your own words.
+                </p>
+                <Link
+                  href="/app/prompts"
+                  className="mt-2 inline-block text-base font-medium text-sage-dark underline hover:no-underline"
+                >
+                  Back to prompt library
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <Card padding="lg" className="border-sage/20 bg-sage/5">
           <div className="flex gap-3">
             <Lightbulb className="h-6 w-6 shrink-0 text-sage-dark" aria-hidden />

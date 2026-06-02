@@ -7,16 +7,26 @@ export const metadata: Metadata = {
   title: "Prompt Lab",
 };
 
-export default function PromptLabPage() {
+interface PromptLabPageProps {
+  searchParams: Promise<{ from?: string }>;
+}
+
+export default async function PromptLabPage({ searchParams }: PromptLabPageProps) {
+  const { from } = await searchParams;
+
   return (
     <PaidFeatureGate featureName="Prompt Lab">
       <div className="app-readable">
         <SectionHeading
           title="Prompt Lab"
-          description="Build a strong prompt step by step. Each box explains what to write in plain English — no jargon required."
+          description={
+            from
+              ? "Customize your library prompt below — add your details, then copy into ChatGPT."
+              : "Build a strong prompt step by step. Each box explains what to write in plain English — no jargon required."
+          }
         />
         <div className="mt-10">
-          <PromptLabForm />
+          <PromptLabForm key={from ?? "blank"} initialPromptId={from} />
         </div>
       </div>
     </PaidFeatureGate>
