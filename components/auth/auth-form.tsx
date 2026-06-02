@@ -20,6 +20,10 @@ const errorMessages: Record<string, string> = {
     "Real accounts require AUTH_MODE=authjs and DATABASE_URL. See README.",
   "mock-disabled": "Mock sign-in is disabled. Use email and password with Auth.js.",
   "use-mock-dev-form": "Set AUTH_MODE=mock in .env.local for dev cookie login.",
+  "server-error":
+    "We could not create your account right now. Please try again in a moment. If this keeps happening, contact support.",
+  "account-created-sign-in":
+    "Your account was created. Please sign in with your email and password.",
 };
 
 export function AuthForm({ mode, errorCode }: AuthFormProps) {

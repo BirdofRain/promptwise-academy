@@ -32,20 +32,33 @@ export async function registerUser(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await prisma.user.create({
-    data: {
-      email,
-      name: name || email.split("@")[0],
-      passwordHash,
-      subscription: {
-        create: { status: "NONE" },
+  try {
+    await prisma.user.create({
+      data: {
+        email,
+        name: name || email.split("@")[0],
+        passwordHash,
+        subscription: {
+          create: { status: "NONE" },
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("[register] user create failed", {
+      emailPrefix: email.slice(0, 3),
+      code: (err as { code?: string }).code,
+    });
+    redirect("/signup?error=server-error");
+  }
 
-  await signIn("credentials", {
-    email,
-    password,
-    redirectTo: "/app",
-  });
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/app",
+    });
+  } catch (err) {
+    console.error("[register] sign-in after create failed", err);
+    redirect("/login?error=account-created-sign-in");
+  }
 }
